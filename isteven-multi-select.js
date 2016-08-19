@@ -55,6 +55,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             selectionMode   : '@',
             minSearchLength : '@',  // 3.0.0 - OK
             skipInputSync   : '=',
+            useExternalSearch: '=',
             neverSyncInput  : '@',
             smartAdd        : '=',
             ignoreOutputs   : '=',
@@ -135,7 +136,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                 $scope.updateFilter();
             }
 
-            $scope.updateFilter = function()
+            $scope.updateFilter = function(usingExternalSearch)
             {
                 // we check by looping from end of input-model
                 $scope.filteredModel = [];
@@ -216,13 +217,13 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                             }
                         });
 
-                        $scope.onSearchChange({
-                            data:
-                            {
+                        if(!usingExternalSearch) {
+                            //prevents a double run
+                            $scope.onSearchChange()({
                                 keyword: $scope.inputLabel.labelFilter,
                                 result: filterObj
-                            }
-                        });
+                            });
+                        }
                     }
                 },0);
             };
@@ -234,11 +235,11 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                 // Get helper - select & reset buttons
                 var selectButtons = element.children().children().next().children().children()[ 0 ].getElementsByTagName( 'button' );
                 // Get helper - search
-                var inputField = element.children().children().next().children().children().next()[ 0 ].getElementsByTagName( 'input' );
+                var inputField = element.find( '.inputFilter' );
                 // Get helper - clear button
-                var clearButton = element.children().children().next().children().children().next()[ 0 ].getElementsByTagName( 'button' );
+                var clearButton = element.find( '.clearButton' );
                 // Get checkboxes
-                var checkboxes = element.children().children().next().children().next()[ 0 ].getElementsByTagName( 'input' );
+                var checkboxes = element.find( 'input[type="checkbox"]' );
                 // Push them into global array formElements[]
                 for ( var i = 0; i < selectButtons.length ; i++ )   { formElements.push( selectButtons[ i ] ); }
                 for ( var i = 0; i < inputField.length ; i++ )      { formElements.push( inputField[ i ] ); }
@@ -897,7 +898,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
              *
              *****************************************************/
 
-            // Unfortunately I need to add these grouping properties
+                // Unfortunately I need to add these grouping properties
             var tempStr = genRandomString( 5 );
             $scope.indexProperty = 'idx_' + tempStr;
             $scope.spacingProperty = 'spc_' + tempStr;
@@ -950,8 +951,8 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             }
 
             // min length of keyword to trigger the filter function
-            if ( typeof attrs.MinSearchLength !== 'undefined' && parseInt( attrs.MinSearchLength ) > 0 ) {
-                vMinSearchLength = Math.floor( parseInt( attrs.MinSearchLength ) );
+            if ( typeof attrs.minSearchLength !== 'undefined' && parseInt( attrs.minSearchLength ) > 0 ) {
+                vMinSearchLength = Math.floor( parseInt( attrs.minSearchLength ) );
             }
 
             /****************************************************
@@ -996,7 +997,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             $scope.$watch( 'localModel' , function( newVal, oldVal ) {
                 if ( newVal !== oldVal ) {
                     $scope.backUp = angular.copy( $scope.localModel );
-                    $scope.updateFilter();
+                    $scope.updateFilter($scope.useExternalSearch);
                     $scope.prepareGrouping();
                     $scope.prepareIndex();
                     $scope.refreshOutputModel();
@@ -1059,7 +1060,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
     var template =
         '<span class="multiSelect inlineBlock" id={{directiveId}}>' +
         '<button type="button"' +
-        'class="{{buttonClass}}"' +
+        'class="select-button {{buttonClass}}"' +
         'ng-click="toggleCheckboxes( $event ); refreshSelectedItems(); refreshButton(); prepareGrouping; prepareIndex();"' +
         'ng-bind-html="varButtonLabel">' +
         '</button>' +
