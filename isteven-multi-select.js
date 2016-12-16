@@ -61,6 +61,8 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             ignoreOutputs   : '=',
             buttonClass     : '@',
             varButtonLabel  : '=?',
+            emptySearchLabel: '@',
+            showEmptyLabel  : '=',
 
             // settings based on input model property
             tickProperty    : '@',
@@ -1128,11 +1130,11 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
 
         '<span class="tickMark" ng-if="item[ groupProperty ] !== true && item[ tickProperty ] === true">&#10004;</span>'+
         '</div>'+
-        '</div>'+
-        '</div>'+
-        '</span>';
+        '<div ng-if="showEmptyLabel && (!filteredModel || filteredModel.length === 0)">{{emptySearchLabel}}</div>'
+    '</div>'+
+    '</div>'+
+    '</span>';
 
     $templateCache.put( 'isteven-multi-select.htm' , template );
 
 }]);
-
