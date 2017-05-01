@@ -235,7 +235,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             $scope.getFormElements = function() {
                 formElements = [];
                 // Get helper - select & reset buttons
-                var selectButtons = element.children().children().next().children().children()[ 0 ].getElementsByTagName( 'button' );
+                var selectButtons = element.find('.helperButton');
                 // Get helper - search
                 var inputField = element.find( '.inputFilter' );
                 // Get helper - clear button
@@ -696,7 +696,9 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                     }
                     // if there's no filter then just focus on the first checkbox item
                     else {
-                        formElements[ $scope.tabIndex ].focus();
+                        if(formElements.length > $scope.tabIndex) {
+                            formElements[ $scope.tabIndex ].focus();
+                        }
                     }
 
                     // open callback
