@@ -512,10 +512,10 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                             continue;
                         var outputModelIndex = $scope.tickedIds.indexOf(model[$scope.idProperty]);
                         //check for an add
-                        if(model[$scope.tickProperty] === true && outputModelIndex === -1) {
+                        if((model[$scope.tickProperty] === true || $scope.tickedIds.indexOf(model[$scope.idProperty]) !== -1) && outputModelIndex === -1) {
                             $scope.outputModel.push(model);
                             $scope.tickedIds.push(model[$scope.idProperty]);
-                        } else if(!model[$scope.tickProperty] && outputModelIndex !== -1) {
+                        } else if((!model[$scope.tickProperty] && $scope.tickedIds.indexOf(model[$scope.idProperty]) === -1) && outputModelIndex !== -1) {
                             $scope.outputModel.splice(outputModelIndex, 1);
                             $scope.tickedIds.splice(outputModelIndex, 1);
                         }
@@ -1106,7 +1106,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
 
         '<div class="checkBoxContainer">'+
         '<div '+
-        'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem"'+
+        'ng-repeat="item in filteredModel | filter:removeGroupEndMarker" class="multiSelectItem {{item.optionClass}}"'+
         'ng-class="{selected: item[ tickProperty ], horizontal: orientationH, vertical: orientationV, multiSelectGroup:item[ groupProperty ], disabled:itemIsDisabled( item )}"'+
         'ng-click="syncItems( item, $event, $index );" '+
         'ng-mouseleave="removeFocusStyle( tabIndex );"> '+
