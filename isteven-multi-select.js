@@ -71,6 +71,8 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             groupProperty   : '@',
             searchProperty  : '@',  // 3.0.0 - OK
             maxHeight       : '@',
+            tickedIds       : '=?', 
+            tickedIdsAsModel: '@',
 
             // callbacks
             onClear         : '&',  // 3.0.0 - OK
@@ -102,7 +104,11 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             $scope.tabIndex         = 0;
             $scope.lang             = {};
             $scope.localModel       = [];
-            $scope.searchProperty = attrs['searchProperty'] ? $scope.searchProperty : $scope.itemLabel;
+            $scope.searchProperty   = attrs['searchProperty'] ? $scope.searchProperty : $scope.itemLabel;
+            $scope.tickedIds        = $scope.tickedIds ? $scope.tickedIds : [];
+            $scope.outputModel      = $scope.outputModel ? $scope.outputModel : [];
+
+            
 
             var
                 prevTabIndex        = 0,
@@ -500,7 +506,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             $scope.refreshOutputModel = function() {
                 //update the outputModel indexes
                 if($scope.smartAdd && $scope.idProperty) {
-                    $scope.tickedIds = [];
+                    $scope.tickedIds.splice(0, $scope.tickedIds.length);
                     if ($scope.idProperty) {
                         for (var i = 0; i < $scope.outputModel.length; i++) {
                             $scope.tickedIds.push($scope.outputModel[i][$scope.idProperty]);
@@ -512,10 +518,10 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                             continue;
                         var outputModelIndex = $scope.tickedIds.indexOf(model[$scope.idProperty]);
                         //check for an add
-                        if((model[$scope.tickProperty] === true || $scope.tickedIds.indexOf(model[$scope.idProperty]) !== -1) && outputModelIndex === -1) {
+                        if(model[$scope.tickProperty] === true && outputModelIndex === -1) {
                             $scope.outputModel.push(model);
                             $scope.tickedIds.push(model[$scope.idProperty]);
-                        } else if((!model[$scope.tickProperty] && $scope.tickedIds.indexOf(model[$scope.idProperty]) === -1) && outputModelIndex !== -1) {
+                        } else if(!model[$scope.tickProperty] && outputModelIndex !== -1) {
                             $scope.outputModel.splice(outputModelIndex, 1);
                             $scope.tickedIds.splice(outputModelIndex, 1);
                         }
@@ -972,7 +978,9 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                 $scope.$watch('inputModel', function (newVal) {
                     if (newVal) {
                         syncLocalModel();
-
+                        if (typeof attrs.tickedIdsAsModel !== 'undefined') {
+                            updateOutputModelFromTickedIds();
+                        }
                         if (!$scope.skipInputSync)
                             $scope.refreshOutputModel();
                         $scope.refreshButton();
@@ -980,6 +988,9 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                 }, true);
             } else {
                 syncLocalModel();
+                if (typeof attrs.tickedIdsAsModel !== 'undefined') {
+                    updateOutputModelFromTickedIds();
+                }
                 if (!$scope.skipInputSync)
                     $scope.refreshOutputModel();
                 $scope.refreshButton();
@@ -1010,27 +1021,54 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
             });
 
             //watch3, for changes in the output model, changes in this mean a load of new selections should update the button
-            $scope.$watch('outputModel', function (newVal) {
-                if (newVal && !localUpdate && $scope.idProperty) {
-                    $scope.tickedIds = [];
-                    if ($scope.idProperty) {
-                        for (var i = newVal.length - 1; i >= 0; i--) {
-                            $scope.tickedIds.push(newVal[i][$scope.idProperty]);
+            if (typeof attrs.tickedIdsAsModel === 'undefined') {
+                $scope.$watch('outputModel', function (newVal) {
+                    if (newVal && !localUpdate && $scope.idProperty) {
+                        $scope.tickedIds = [];
+                        if ($scope.idProperty) {
+                            for (var i = newVal.length - 1; i >= 0; i--) {
+                                $scope.tickedIds.push(newVal[i][$scope.idProperty]);
+                            }
                         }
-                    }
-                    for (var j = $scope.localModel.length - 1; j >= 0; j--) {
-                        if($scope.idProperty && $scope.tickedIds.indexOf($scope.localModel[j][$scope.idProperty]) !== -1) {
-                            $scope.localModel[j][$scope.tickProperty] = true;
-                        } else {
-                            $scope.localModel[j][$scope.tickProperty] = false;
+                        for (var j = $scope.localModel.length - 1; j >= 0; j--) {
+                            if($scope.idProperty && $scope.tickedIds.indexOf($scope.localModel[j][$scope.idProperty]) !== -1) {
+                                $scope.localModel[j][$scope.tickProperty] = true;
+                            } else {
+                                $scope.localModel[j][$scope.tickProperty] = false;
+                            }
                         }
-                    }
-                    //update the filtered model
-                    $scope.refreshButton();
+                        //update the filtered model
+                        $scope.refreshButton();
 
+                    }
+                    localUpdate = false;
+                });
+            } 
+
+            //watch3, for changes in the tickedIds model, changes in this mean a load of new selections should update the button
+            if (typeof attrs.tickedIdsAsModel !== 'undefined') {
+                $scope.$watch('tickedIds', function (newVal) {
+                    if (newVal && !localUpdate && $scope.idProperty) {
+                        updateOutputModelFromTickedIds();
+                        //update the filtered model
+                        $scope.refreshButton();
+
+                    }
+                    localUpdate = false;
+                });
+            }
+
+            function updateOutputModelFromTickedIds(){
+                $scope.outputModel.splice(0, $scope.outputModel.length);
+                for (var j = $scope.localModel.length - 1; j >= 0; j--) {
+                    if ($scope.idProperty && $scope.tickedIds.indexOf($scope.localModel[j][$scope.idProperty]) !== -1) {
+                        $scope.localModel[j][$scope.tickProperty] = true;
+                        $scope.outputModel.push($scope.localModel[j]);
+                    } else {
+                        $scope.localModel[j][$scope.tickProperty] = false;
+                    }
                 }
-                localUpdate = false;
-            });
+            }
 
             // watch for changes in directive state (disabled or enabled)
             $scope.$watch( 'isDisabled' , function( newVal ) {
