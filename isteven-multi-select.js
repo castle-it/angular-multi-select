@@ -225,7 +225,7 @@ angular.module( 'isteven-multi-select', ['ng'] ).directive( 'istevenMultiSelect'
                             }
                         });
 
-                        if(!usingExternalSearch && $scope.onSearchChange && typeof $scope.onSearchChange == "function") {
+                        if(!usingExternalSearch && $scope.onSearchChange() && typeof $scope.onSearchChange() == "function") {
                             //prevents a double run
                             $scope.onSearchChange()({
                                 keyword: $scope.inputLabel.labelFilter,
